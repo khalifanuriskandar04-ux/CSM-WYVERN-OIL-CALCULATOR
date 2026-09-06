@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#06263a">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<title>CSM WYVERN - Oil Calculator</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#061d2c;
+  color:#fff;
+}
+.app{
+  max-width:760px;
+  margin:auto;
+  min-height:100vh;
+  background:linear-gradient(145deg,#06283d,#073b56);
+}
+.header{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  padding:22px 20px;
+  border-bottom:1px solid #187ba8;
+}
+.logo{
+  width:68px;
+  height:68px;
+  min-width:68px;
+  object-fit:contain;
+  border-radius:16px;
+  background:#06243a;
+  padding:5px;
+}
+.title h1{margin:0;font-size:27px}
+.title p{margin:7px 0 0;color:#a9c7d8;font-weight:bold;letter-spacing:3px;font-size:12px}
+.status{
+  margin-left:auto;
+  border:1px solid #20d99a;
+  color:#55efb5;
+  border-radius:20px;
+  padding:8px 13px;
+  font-size:11px;
+  font-weight:bold;
+}
+.card{
+  margin:22px 18px;
+  padding:22px;
+  border:1px solid #2784ae;
+  border-radius:24px;
+  background:rgba(7,52,76,.72);
+}
+h2{
+  margin:0 0 22px;
+  font-size:22px;
+  letter-spacing:1px;
+}
+label{
+  display:block;
+  margin:18px 0 8px;
+  color:#b3ccda;
+  font-size:13px;
+  font-weight:bold;
+  letter-spacing:2px;
+}
+input,select{
+  width:100%;
+  height:62px;
+  border:2px solid #2784ae;
+  border-radius:17px;
+  background:#031e30;
+  color:#fff;
+  padding:0 17px;
+  font-size:20px;
+  outline:none;
+}
+small{color:#91afbe}
+.buttons{display:flex;gap:14px;margin-top:22px}
+button{
+  flex:1;
+  height:58px;
+  border-radius:17px;
+  border:2px solid #2784ae;
+  background:#07334b;
+  color:white;
+  font-size:18px;
+  font-weight:bold;
+}
+button.calculate{
+  background:linear-gradient(90deg,#10bce9,#237cf0);
+  border:0;
+}
+.results{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+.result{
+  border:1px solid #2784ae;
+  border-radius:18px;
+  padding:17px;
+  background:#062a40;
+}
+.result span{
+  color:#91afbe;
+  font-size:12px;
+  letter-spacing:2px;
+  font-weight:bold;
+}
+.result strong{
+  display:block;
+  margin-top:10px;
+  font-size:25px;
+}
+.note{
+  color:#8eaab9;
+  line-height:1.5;
+  font-size:13px;
+}
+@media(max-width:520px){
+  .title h1{font-size:23px}
+  .status{display:none}
+  .card{margin:16px 12px;padding:18px}
+  .results{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<header class="header">
+  <!-- Icon dibuat kecil agar tidak memenuhi tampilan -->
+  <img class="logo" src="icon.png" alt="CSM WYVERN Oil Calculator">
+  <div class="title">
+    <h1>CSM WYVERN</h1>
+    <p>ONBOARD OIL CALCULATOR</p>
+  </div>
+  <div class="status">OFFLINE</div>
+</header>
+
+<section class="card">
+  <h2>💧 INPUT DATA</h2>
+
+  <label>PRODUCT</label>
+  <select id="product">
+    <option>LSMGO / MGO</option>
+    <option>VLSFO</option>
+    <option>HSFO</option>
+  </select>
+
+  <label>DENSITY @ 15°C (kg/L)</label>
+  <input id="density" type="number" step="0.0001" value="0.8776">
+  <small>Example: 0.8776 = 877.6 kg/m³</small>
+
+  <label>OBSERVED TEMPERATURE (°C)</label>
+  <input id="temp" type="number" step="0.1" value="31.3">
+
+  <label>LOADING QUANTITY (MT)</label>
+  <input id="mt" type="number" step="0.001" value="2500">
+  <small>Metric Tons (MT)</small>
+
+  <div class="buttons">
+    <button class="calculate" onclick="calculate()">⚙️ CALCULATE</button>
+    <button onclick="clearAll()">↻ CLEAR</button>
+  </div>
+
+  <p class="note">
+    Masukkan Density @15°C, Temperature dan Loading MT.
+    VCF, WCF, density observed, GOV dan GSV dihitung otomatis.
+  </p>
+</section>
+
+<section class="card">
+  <h2>📈 CALCULATION RESULT</h2>
+
+  <div class="results">
+    <div class="result"><span>VCF</span><strong id="vcf">—</strong></div>
+    <div class="result"><span>WCF</span><strong id="wcf">—</strong></div>
+    <div class="result"><span>DENSITY @ OBSERVED</span><strong id="obsDensity">—</strong></div>
+    <div class="result"><span>GOV / OBSERVED VOL.</span><strong id="gov">—</strong></div>
+    <div class="result"><span>GSV @ 15°C</span><strong id="gsv">—</strong></div>
+    <div class="result"><span>LOADING</span><strong id="loading">—</strong></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+function calculate(){
+  const d15=parseFloat(document.getElementById("density").value);
+  const t=parseFloat(document.getElementById("temp").value);
+  const mt=parseFloat(document.getElementById("mt").value);
+
+  if(!d15 || isNaN(t) || !mt){
+    alert("Please enter Density, Temperature and Loading Quantity.");
+    return;
+  }
+
+  /*
+   * Approximate petroleum volume correction.
+   * For official custody-transfer figures, replace the
+   * calculation with the approved ASTM/API table used onboard.
+   */
+  const alpha = 0.00083;
+  const vcf = 1 / (1 + alpha * (t - 15));
+  const densityObserved = d15 / vcf;
+  const wcf = d15;
+  const gov = mt / densityObserved;
+  const gsv = gov * vcf;
+
+  document.getElementById("vcf").textContent=vcf.toFixed(5);
+  document.getElementById("wcf").textContent=wcf.toFixed(5);
+  document.getElementById("obsDensity").textContent=(densityObserved*1000).toFixed(2);
+  document.getElementById("gov").textContent=gov.toLocaleString("en-US",{minimumFractionDigits:3,maximumFractionDigits:3});
+  document.getElementById("gsv").textContent=gsv.toLocaleString("en-US",{minimumFractionDigits:3,maximumFractionDigits:3});
+  document.getElementById("loading").textContent=mt.toLocaleString("en-US",{minimumFractionDigits:3,maximumFractionDigits:3})+" MT";
+}
+
+function clearAll(){
+  document.getElementById("density").value="";
+  document.getElementById("temp").value="";
+  document.getElementById("mt").value="";
+  ["vcf","wcf","obsDensity","gov","gsv","loading"].forEach(id=>{
+    document.getElementById(id).textContent="—";
+  });
+}
+</script>
+</body>
+</html>
